@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/uol/funks"
+	utils "github.com/uol/gotest/utils"
 )
 
 /**
@@ -96,4 +97,60 @@ func TestJSONDurationMarshal(t *testing.T) {
 	}
 
 	assert.Equal(t, fmt.Sprintf(`{"someDuration":"%ds"}`, seconds), (string)(result))
+}
+
+// TestNewDurationString - tests creating a new instance using a string
+func TestNewDurationString(t *testing.T) {
+
+	_, err := funks.NewStringDuration("x")
+	if !assert.Error(t, err, "unexpected parsing error") {
+		return
+	}
+
+	seconds := rand.Int63n(59)
+	strDuration := fmt.Sprintf("%ds", seconds)
+
+	d, err := funks.NewStringDuration(strDuration)
+	if !assert.NoError(t, err, "unexpected error parsing json string") {
+		return
+	}
+
+	assert.Equal(t, utils.MustParseDuration(strDuration), d.Duration, "must be equal")
+}
+
+// TestNewDuration - tests creating a new instance using a time.Duration
+func TestNewDuration(t *testing.T) {
+
+	randomDuration := time.Duration(utils.RandomInt(1, 60)) * time.Second
+	d := funks.NewDuration(randomDuration)
+
+	assert.Equal(t, randomDuration, d.Duration, "must be equal")
+}
+
+// TestForceNewStringDurationPanic - tests creating a new instance using the forced method
+func TestForceNewStringDurationPanic(t *testing.T) {
+
+	defer func() {
+		r := recover()
+		if !assert.NotNil(t, r, "not nil error expected") {
+			return
+		}
+
+		assert.Error(t, r.(error), "expected an error recovery")
+	}()
+
+	funks.ForceNewStringDuration("x")
+
+	assert.FailNow(t, "the code must not reach this point")
+}
+
+// TestForceNewStringDuration - tests creating a new forced instance using a string
+func TestForceNewStringDuration(t *testing.T) {
+
+	seconds := rand.Int63n(59)
+	strDuration := fmt.Sprintf("%ds", seconds)
+
+	d := funks.ForceNewStringDuration(strDuration)
+
+	assert.Equal(t, utils.MustParseDuration(strDuration), d.Duration, "must be equal")
 }

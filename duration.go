@@ -11,6 +11,34 @@ type Duration struct {
 	time.Duration
 }
 
+// NewStringDuration - returns a new duration based on a string
+func NewStringDuration(value string) (*Duration, error) {
+
+	d, err := time.ParseDuration(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Duration{d}, nil
+}
+
+// ForceNewStringDuration - returns a new duration based on a string (panics on error)
+func ForceNewStringDuration(value string) *Duration {
+
+	d, err := time.ParseDuration(value)
+	if err != nil {
+		panic(err)
+	}
+
+	return &Duration{d}
+}
+
+// NewDuration - returns a new duration based on duration values
+func NewDuration(value time.Duration) *Duration {
+
+	return &Duration{value}
+}
+
 // UnmarshalText - used by the toml parser to proper parse duration values
 func (d *Duration) UnmarshalText(text []byte) error {
 	var err error
