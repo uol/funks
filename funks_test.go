@@ -3,7 +3,9 @@ package funks_test
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"sync"
 	"testing"
@@ -12,6 +14,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/uol/funks"
+	gthttp "github.com/uol/gotest/http"
 	utils "github.com/uol/gotest/utils"
 )
 
@@ -153,4 +156,62 @@ func TestForceNewStringDuration(t *testing.T) {
 	d := funks.ForceNewStringDuration(strDuration)
 
 	assert.Equal(t, utils.MustParseDuration(strDuration), d.Duration, "must be equal")
+}
+
+// TestHTTPClientConfiguration - tests a http client
+func TestHTTPClientConfiguration(t *testing.T) {
+
+	randomWait := time.Duration(utils.RandomInt(1, 3)) * time.Second
+
+	serverConf := &gthttp.Configuration{
+		Host:        "localhost",
+		Port:        18080,
+		ChannelSize: 5,
+		Responses: map[string][]gthttp.ResponseData{
+			"normal": {
+				{
+					RequestData: gthttp.RequestData{
+						Method: "GET",
+						URI:    "/test",
+					},
+					Status: http.StatusOK,
+					Wait:   randomWait,
+				},
+			},
+		},
+	}
+
+	s := gthttp.NewServer(serverConf)
+	defer s.Close()
+
+	// generates a timeout
+	client := funks.CreateHTTPClient(randomWait-time.Second, true, 0)
+	_, err := client.Get("http://localhost:18080/test")
+	if !assert.Error(t, err, "expected an error") {
+		return
+	}
+
+	// a normal request
+	client = funks.CreateHTTPClient(randomWait+time.Second, true, 0)
+	resp, err := client.Get("http://localhost:18080/test")
+	if !assert.NoError(t, err, "expected no error now") {
+		return
+	}
+
+	if !assert.Equal(t, http.StatusOK, resp.StatusCode, "expected a 200 code") {
+		return
+	}
+
+	// a limited request server
+	client = funks.CreateHTTPClient(randomWait+time.Second, true, 1)
+	startTime := time.Now()
+	for i := 0; i < 3; i++ {
+		resp, err = client.Get("http://localhost:18080/test")
+		if !assert.NoError(t, err, "expected no error now") {
+			return
+		}
+	}
+	elapsedTime := time.Since(startTime)
+
+	assert.Equal(t, randomWait.Seconds()*3, math.Floor(elapsedTime.Seconds()), "expected only one request per %s", randomWait)
 }

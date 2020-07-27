@@ -11,11 +11,12 @@ import (
 * @author rnojiri
 **/
 
-// CreateHTTPClient - creates a new HTTP client
-func CreateHTTPClient(timeout time.Duration, insecureSkipVerify bool) *http.Client {
+// CreateHTTPClient - creates a new HTTP client (use zero maxConnsPerHost for unlimited connections)
+func CreateHTTPClient(timeout time.Duration, insecureSkipVerify bool, maxConnsPerHost int) *http.Client {
 
 	transportCore := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
+		MaxConnsPerHost: maxConnsPerHost,
 	}
 
 	httpClient := &http.Client{
