@@ -185,14 +185,14 @@ func TestHTTPClientConfiguration(t *testing.T) {
 	defer s.Close()
 
 	// generates a timeout
-	client := funks.CreateHTTPClient(randomWait-time.Second, true, 0)
+	client := funks.CreateHTTPClient(randomWait-time.Second, true)
 	_, err := client.Get("http://localhost:18080/test")
 	if !assert.Error(t, err, "expected an error") {
 		return
 	}
 
 	// a normal request
-	client = funks.CreateHTTPClient(randomWait+time.Second, true, 0)
+	client = funks.CreateHTTPClient(randomWait+time.Second, true)
 	resp, err := client.Get("http://localhost:18080/test")
 	if !assert.NoError(t, err, "expected no error now") {
 		return
@@ -203,7 +203,7 @@ func TestHTTPClientConfiguration(t *testing.T) {
 	}
 
 	// a limited request server
-	client = funks.CreateHTTPClient(randomWait+time.Second, true, 1)
+	client = funks.CreateHTTPClientAdv(randomWait+time.Second, true, 1)
 	startTime := time.Now()
 	for i := 0; i < 3; i++ {
 		resp, err = client.Get("http://localhost:18080/test")
